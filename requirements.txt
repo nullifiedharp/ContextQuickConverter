@@ -1,0 +1,5 @@
+pillow>=11.3          # images (incl. WebP + AVIF)
+pillow-heif>=0.18     # iPhone HEIC/HEIF photos
+imageio-ffmpeg>=0.5   # ships a full ffmpeg.exe -> video/audio, no separate install
+pymupdf>=1.24         # PDF -> images / text
+pywin32>=306; sys_platform == "win32"   # drives Word/Excel/PowerPoint if installed

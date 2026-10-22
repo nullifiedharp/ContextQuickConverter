@@ -1,0 +1,41 @@
+# Builds the Windows exe on GitHub's servers. Push to GitHub, then grab the zip
+# from the Actions run's "Artifacts". Pushing a tag like v1.0.0 also publishes
+# it as a GitHub Release.
+name: build
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt pyinstaller
+      - name: Test conversions
+        run: python tests/test_convert.py
+      - name: Build
+        run: pyinstaller QuickConvert.spec --noconfirm --clean
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path dist/QuickConvert -DestinationPath dist/QuickConvert-win64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QuickConvert-win64
+          path: dist/QuickConvert-win64.zip
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/QuickConvert-win64.zip
