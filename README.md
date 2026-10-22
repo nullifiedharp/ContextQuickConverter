@@ -1,5 +1,7 @@
 # QuickConvert
 
+For compiled versions, please see [Releases](https://github.com/nullifiedharp/ContextQuickConverter/tree/main/Releases)
+
 Right-click a file in Windows Explorer → **Convert to**, **Resize image** or
 **Compress video** → pick an option. The new copy appears next to the original (the original is never touched,
 and nothing is ever overwritten: `photo.png` becomes `photo (1).png` if taken).
