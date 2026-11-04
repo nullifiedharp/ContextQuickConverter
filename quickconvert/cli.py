@@ -6,6 +6,8 @@
   QuickConvert.exe compress 10 "a.mp4"     -> Compress video (high, small, <MB>, custom)
   QuickConvert.exe install [--quiet]
   QuickConvert.exe uninstall [--quiet]
+  QuickConvert.exe register   [--all-users] [--quiet]   -> add menus only (used by Setup)
+  QuickConvert.exe unregister [--all-users] [--quiet]   -> remove menus only (used by Setup)
 """
 import json
 import os
@@ -16,7 +18,8 @@ from pathlib import Path
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     quiet = "--quiet" in argv
-    argv = [a for a in argv if a != "--quiet"]
+    all_users = "--all-users" in argv
+    argv = [a for a in argv if a not in ("--quiet", "--all-users")]
 
     if not argv:
         from .ui import setup_window
@@ -28,10 +31,19 @@ def main(argv=None):
         return _convert(argv[1], Path(argv[2]))
     if cmd in ("resize", "compress") and len(argv) >= 3:
         return _op(cmd, argv[1], Path(argv[2]))
-    if cmd in ("install", "uninstall"):
+    if cmd in ("install", "uninstall", "register", "unregister"):
         from . import shell_integration as si
         try:
-            si.install() if cmd == "install" else si.uninstall()
+            if cmd == "install":
+                si.install()
+            elif cmd == "uninstall":
+                si.uninstall()
+            elif cmd == "register":
+                si.register(Path(sys.executable) if si.frozen() else None, all_users)
+                si._remove_legacy_install()
+            else:
+                si.unregister_menus(all_users)
+                si._notify_shell()
         except Exception as e:
             if not quiet:
                 from .ui import show_error

@@ -203,10 +203,22 @@ def setup_window():
             messagebox.showerror(APP_NAME, f"Uninstall failed:\n{e}", parent=root)
         refresh()
 
-    install_btn.config(command=do_install)
-    uninstall_btn.config(command=do_uninstall)
-    install_btn.pack(side="left")
-    uninstall_btn.pack(side="left", padx=(8, 0))
     ttk.Button(btns, text="Close", command=root.destroy).pack(side="right")
-    refresh()
+
+    if si.setup_scope():
+        # Installed by QuickConvert-Setup.exe: Setup owns the menus and uninstall.
+        on = si.is_registered()
+        status.config(text="Installed - right-click a file to try it." if on else
+                      "The right-click menus are turned off.",
+                      foreground="#1a7f37" if on else "#9a6700")
+        ttk.Label(frm, foreground="#555", justify="left",
+                  text=("To change which menus appear, run the Setup again.\n"
+                        "To remove QuickConvert: Settings > Apps > Installed apps.")
+                  ).pack(anchor="w", pady=(10, 0), before=btns)
+    else:
+        install_btn.config(command=do_install)
+        uninstall_btn.config(command=do_uninstall)
+        install_btn.pack(side="left")
+        uninstall_btn.pack(side="left", padx=(8, 0))
+        refresh()
     root.mainloop()

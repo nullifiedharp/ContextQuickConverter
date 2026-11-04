@@ -1,7 +1,5 @@
 # QuickConvert
 
-For compiled versions, please see [Releases](https://github.com/nullifiedharp/ContextQuickConverter/tree/main/Releases)
-
 Right-click a file in Windows Explorer → **Convert to**, **Resize image** or
 **Compress video** → pick an option. The new copy appears next to the original (the original is never touched,
 and nothing is ever overwritten: `photo.png` becomes `photo (1).png` if taken).
@@ -41,14 +39,22 @@ Nice details:
   a cancelled/failed job leaves no half-written file.
 - Select 20 videos and convert them all: they queue up (a few at a time) instead of
   hammering the CPU at once.
-- Installs per-user (no admin), shows up in **Settings → Apps** for uninstalling.
+- Proper installer (Inno Setup): per-user with no admin prompt (or all users),
+  Start menu entry, uninstall from **Settings → Apps**, upgrades in place.
 
-## Install (using the built exe)
+## Build and install
 
-1. Unzip `QuickConvert-win64.zip` anywhere.
-2. Run `QuickConvert.exe` → **Install**. It copies itself to
-   `%LOCALAPPDATA%\Programs\QuickConvert` and adds the menus. You can delete the
-   unzipped folder afterwards.
+Needs Python 3.10+ from python.org (with "Add python.exe to PATH" ticked).
+
+1. Double-click **build.bat**. It:
+   - creates a venv and installs the Python packages
+   - runs the conversion tests
+   - builds `QuickConvert.exe` with ffmpeg bundled
+   - installs Inno Setup through winget if it's missing
+   - produces **installer\QuickConvert-Setup-1.2.0.exe**
+2. Run the setup. Each right-click menu is a checkbox (Convert to / Resize image /
+   Compress video). Re-run it any time to turn one off or on; a newer setup
+   upgrades in place.
 3. Right-click a file. **Windows 11:** the classic menu is under
    **Show more options** (or **Shift + right-click**).
 
@@ -56,20 +62,15 @@ Document conversions use **Microsoft Office** if installed (best fidelity),
 otherwise the free **LibreOffice**. Images, video, audio and PDF need nothing
 extra — ffmpeg is bundled.
 
-## Build the exe yourself
+Already used the older "click Install inside QuickConvert.exe" version? Just run the
+setup: it takes over the same folder and removes the old Settings → Apps entry.
 
-Needs Python 3.10+ from python.org (with "Add to PATH" ticked). On Windows:
+The setup isn't code-signed, so the first time Windows SmartScreen may say
+"Windows protected your PC" → **More info → Run anyway**.
 
-```bat
-build.bat
-```
-
-That creates a venv, installs requirements, runs the tests, and produces
-`dist\QuickConvert\QuickConvert.exe` plus `dist\QuickConvert-win64.zip`.
-
-Or push the repo to GitHub — `.github/workflows/build.yml` builds the zip on
-GitHub's Windows runners (download it from the Actions run; tag `v1.0.0` to
-publish a Release).
+**GitHub:** push the repo and `.github/workflows/build.yml` builds the setup on
+GitHub's Windows servers (download it from the Actions run). Bump `APP_VERSION` in
+`quickconvert/formats.py`, then push a matching tag like `v1.2.0` to publish it as a Release.
 
 ### Run from source (no exe)
 
@@ -86,8 +87,10 @@ QuickConvert.exe                         setup window
 QuickConvert.exe convert png "C:\a.jpg"  Convert to > PNG
 QuickConvert.exe resize 50pct "a.jpg"    Resize (50pct, 1920px, 1920x1080, custom)
 QuickConvert.exe compress 10 "a.mp4"     Compress (high, small, <MB>, custom)
-QuickConvert.exe install   [--quiet]
+QuickConvert.exe install   [--quiet]     portable self-install (no setup.exe)
 QuickConvert.exe uninstall [--quiet]
+QuickConvert.exe register   [--all-users] [--quiet]   just add menus for this exe
+QuickConvert.exe unregister [--all-users] [--quiet]
 ```
 
 ## Code layout
@@ -104,14 +107,18 @@ quickconvert/
   ui.py                       progress popup + setup window (tkinter)
   util.py                     safe output naming, job queue (named semaphore)
 tests/test_convert.py         every conversion, resize and compress option on sample files
+installer/QuickConvert.iss    Inno Setup script (setup options, shortcuts, menu checkboxes)
+tools/make_installer_menus.py writes installer/menus.iss (the registry entries) from formats.py
+build.bat                     one-click build -> installer\QuickConvert-Setup-<version>.exe
 ```
 
 **Adding a preset:** add a line to `RESIZE_PRESETS` / `COMPRESS_PRESETS` in
-`formats.py`, then Reinstall / Update.
+`formats.py`, bump `APP_VERSION`, run build.bat and the new setup.
 
 **Adding a format:** add the extension to the right `*_IN` / `*_OUT` list in
 `formats.py` (and a label), handle it in the converter if it needs special
-options, then run `QuickConvert.exe` → **Reinstall / Update** so the menus refresh.
+options, then rebuild and run the new setup — the installer's menu entries are
+generated from `formats.py`, so they always match.
 
 ## Notes
 

@@ -75,12 +75,16 @@ def _slug(arg: str) -> str:
     return arg.replace("%", "pct").replace(" ", "")
 
 
-def plan_registry(exe: Path | None = None):
-    """List of (subkey, value_name, value) to write. Pure function, testable anywhere."""
-    prefix = command_prefix(exe)
-    icon = icon_value(exe)
+def plan_registry(exe: Path | None = None, prefix: str | None = None,
+                  icon: str | None = None, verbs=None):
+    """List of (subkey, value_name, value) to write. Pure function, testable anywhere.
+    prefix/icon override the command and icon (the installer passes {app} paths)."""
+    prefix = prefix or command_prefix(exe)
+    icon = icon or icon_value(exe)
     rows = []
     for verb, title, exts, items in _menus():
+        if verbs is not None and verb not in verbs:
+            continue
         for ext in exts:
             base = rf"{SFA}\.{ext}\shell\{verb}"
             rows += [(base, "MUIVerb", title),
@@ -116,32 +120,60 @@ def _notify_shell():
     ctypes.windll.shell32.SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None)
 
 
-def register(exe: Path | None = None):
+def _root(all_users: bool):
     import winreg
-    HK = winreg.HKEY_CURRENT_USER
-    unregister_menus()
+    # Same "Software\Classes\..." path; HKLM = every user on the PC (needs admin).
+    return winreg.HKEY_LOCAL_MACHINE if all_users else winreg.HKEY_CURRENT_USER
+
+
+def register(exe: Path | None = None, all_users: bool = False):
+    import winreg
+    HK = _root(all_users)
+    unregister_menus(all_users)
     for key, name, value in plan_registry(exe):
         with winreg.CreateKeyEx(HK, key, 0, winreg.KEY_WRITE) as k:
             winreg.SetValueEx(k, name, 0, winreg.REG_SZ, value)
     _notify_shell()
 
 
-def unregister_menus():
-    import winreg
+def unregister_menus(all_users: bool = False):
+    root = _root(all_users)
     for verb, _, exts, _ in _menus():
         for ext in exts:
-            _delete_tree(winreg.HKEY_CURRENT_USER, rf"{SFA}\.{ext}\shell\{verb}")
+            _delete_tree(root, rf"{SFA}\.{ext}\shell\{verb}")
 
 
 def is_registered() -> bool:
     if not IS_WINDOWS:
         return False
     import winreg
-    try:
-        winreg.CloseKey(winreg.OpenKey(winreg.HKEY_CURRENT_USER, rf"{SFA}\.jpg\shell\{VERB}"))
-        return True
-    except OSError:
-        return False
+    for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            winreg.CloseKey(winreg.OpenKey(root, rf"{SFA}\.jpg\shell\{VERB}"))
+            return True
+        except OSError:
+            pass
+    return False
+
+
+# ------------------------------------------------- installed by Setup.exe?
+def setup_scope() -> str | None:
+    """'user' / 'machine' if the Inno Setup installer put us here, else None.
+    Setup then owns the files, the menus and the Settings > Apps entry."""
+    if not frozen() or not (current_app_dir() / "unins000.exe").exists():
+        return None
+    here = str(current_app_dir().resolve()).lower()
+    for var in ("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)"):
+        pf = os.environ.get(var)
+        if pf and here.startswith(pf.lower().rstrip("\\") + "\\"):
+            return "machine"
+    return "user"
+
+
+def _remove_legacy_install():
+    """Clean up a 1.0/1.1 "click Install" copy so it doesn't linger in Settings > Apps."""
+    import winreg
+    _delete_tree(winreg.HKEY_CURRENT_USER, UNINSTALL_KEY)
 
 
 def _write_uninstall_entry(exe: Path, folder: Path):
@@ -168,6 +200,10 @@ def install() -> Path:
     if not frozen():
         register()
         return Path(sys.executable)
+    scope = setup_scope()
+    if scope:                       # Setup owns the files: just (re)add menus here
+        register(Path(sys.executable), all_users=(scope == "machine"))
+        return Path(sys.executable)
 
     src_dir, dest = current_app_dir(), install_dir()
     exe_name = Path(sys.executable).name
@@ -188,6 +224,11 @@ def install() -> Path:
 
 def uninstall():
     import winreg
+    scope = setup_scope()
+    if scope:                       # files are removed by Settings > Apps / unins000.exe
+        unregister_menus(all_users=(scope == "machine"))
+        _notify_shell()
+        return
     unregister_menus()
     _delete_tree(winreg.HKEY_CURRENT_USER, UNINSTALL_KEY)
     _notify_shell()

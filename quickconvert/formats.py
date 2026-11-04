@@ -1,7 +1,8 @@
 """Which file types get a "Convert to" menu, and what each can become."""
 
 APP_NAME = "QuickConvert"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
+APP_PUBLISHER = "Dave Rishforth"
 
 # Extensions that are just aliases of another one (so .jpeg doesn't offer "JPG").
 CANONICAL = {"jpeg": "jpg", "jfif": "jpg", "jpe": "jpg", "tif": "tiff",
