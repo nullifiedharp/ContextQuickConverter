@@ -1,4 +1,6 @@
-; QuickConvert installer (Inno Setup 6). build.bat compiles this:
+; QuickConvert installer (Inno Setup 6)
+; Copyright (C) 2026 NullHarp - SPDX-License-Identifier: GPL-3.0-or-later
+; build.bat compiles this:
 ;   ISCC /DAppVersion=1.2.0 installer\QuickConvert.iss
 ; The right-click menu entries live in menus.iss, generated from
 ; quickconvert\formats.py by tools\make_installer_menus.py.
@@ -14,7 +16,10 @@ AppId={{4BABA964-5816-4AED-81E9-6785B3539EB3}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
-AppPublisher=Dave Rishforth
+AppPublisher=NullHarp
+AppCopyright=Copyright (C) 2026 NullHarp
+; Shows the GPLv3 on the first page of the wizard.
+LicenseFile=..\LICENSE
 VersionInfoVersion={#AppVersion}
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
@@ -50,6 +55,8 @@ Type: filesandordirs; Name: "{app}\_internal"
 
 [Files]
 Source: "..\dist\QuickConvert\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
+Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Opens a small window showing status and which document converter (Office/LibreOffice) was found.

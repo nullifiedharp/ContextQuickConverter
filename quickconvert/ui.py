@@ -1,3 +1,13 @@
+# QuickConvert - right-click file converter for Windows
+# Copyright (C) 2026 NullHarp
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version. It is distributed WITHOUT ANY WARRANTY; see the LICENSE
+# file or <https://www.gnu.org/licenses/> for details.
+
 """Small Tk windows: a progress popup for conversions and the setup window."""
 import sys
 import threading
@@ -176,6 +186,12 @@ def setup_window():
     ttk.Label(frm, text=docs, justify="left", foreground="#555").pack(anchor="w", pady=(6, 0))
     ttk.Label(frm, text='Windows 11: it appears under "Show more options"\n(or Shift + right-click).',
               justify="left", foreground="#555").pack(anchor="w", pady=(6, 14))
+
+    ttk.Label(frm, foreground="#777", justify="left", font=("Segoe UI", 8),
+              text=(f"{APP_NAME} {APP_VERSION}  -  Copyright (C) 2026 NullHarp\n"
+                    "Free software under the GNU GPL v3 or later, with NO WARRANTY.\n"
+                    "You may share and change it under the license's terms (see LICENSE.txt)."),
+              ).pack(anchor="w", pady=(0, 12))
 
     btns = ttk.Frame(frm)
     btns.pack(fill="x")

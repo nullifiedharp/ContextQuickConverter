@@ -1,8 +1,18 @@
+# QuickConvert - right-click file converter for Windows
+# Copyright (C) 2026 NullHarp
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version. It is distributed WITHOUT ANY WARRANTY; see the LICENSE
+# file or <https://www.gnu.org/licenses/> for details.
+
 """Which file types get a "Convert to" menu, and what each can become."""
 
 APP_NAME = "QuickConvert"
 APP_VERSION = "1.2.0"
-APP_PUBLISHER = "Dave Rishforth"
+APP_PUBLISHER = "NullHarp"
 
 # Extensions that are just aliases of another one (so .jpeg doesn't offer "JPG").
 CANONICAL = {"jpeg": "jpg", "jfif": "jpg", "jpe": "jpg", "tif": "tiff",
